@@ -120,6 +120,7 @@ class FileUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
+        
         file = request.FILES.get('file')
         if not file:
             return Response({"error": "No file provided"}, status=400)
