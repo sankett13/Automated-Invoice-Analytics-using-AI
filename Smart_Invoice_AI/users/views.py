@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import CustomUser
+from .models import CustomUser, InvoiceData
 from rest_framework.parsers import FormParser, MultiPartParser
 import os
 from django.conf import settings
@@ -14,6 +14,9 @@ from google.generativeai import types
 import pathlib
 import mimetypes
 import json
+from django.contrib.auth import login
+from decimal import Decimal
+
 
 #Genai Configuration
 genai.configure(api_key="AIzaSyBC8yV7_4RO3paTUgLPQf6WLYIZ7lnqzgw")
@@ -40,7 +43,7 @@ You are an expert at extracting specific details from invoices. Please carefully
 - Invoice Date: The date the invoice was issued.
 - Supplier Name: The name of the seller or the company issuing the invoice.
 - Supplier GST Number: The Goods and Services Tax Identification Number (GSTIN) of the supplier, if present.
-- Buyer GST Number: The Goods and Services Tax Identification Number (GSTIN) of the buyer, if present.
+- Buyer GST Number: The Goods and Services Tax Identification Number (GSTIN) of the buyer, if present somewhere under details of the recipient/receiver.
 - Items: A list of all items listed in the invoice. For each item, extract:
     - Name: The description or name of the item.
     - Quantity: The quantity of the item purchased, if available.
@@ -51,7 +54,7 @@ You are an expert at extracting specific details from invoices. Please carefully
 - Total Tax: The total combined amount of all taxes (including CGST, SGST, IGST, etc.) mentioned on the invoice. If individual tax components are listed, sum them up. If no taxes are found, output 0.
 - Total Amount: The final, grand total amount due on the invoice, usually found at the very end or clearly labeled as "Total", "Grand Total", "Amount Due", etc.
 
-Format your response as a valid JSON object with the keys: "invoice_number", "invoice_date", "supplier_name", "supplier_gst_number", "buyer_gst_number", "items", "cgst", "sgst", "total_tax", and "total_amount". For the "items", provide a list of dictionaries, where each dictionary has "name", "quantity", "price", and "total" keys. If a field is not found on the invoice, its value in the JSON should be null (e.g., "supplier_gst_number": null).
+Format your response as a valid structured JSON object without any extra characters. The JSON object should have the following structure with the keys: "invoice_number", "invoice_date", "supplier_name", "supplier_gst_number", "buyer_gst_number", "items", "cgst", "sgst", "total_tax", and "total_amount". For the "items", provide a list of dictionaries, where each dictionary has "name", "quantity", "price", and "total" keys. If a field is not found on the invoice, its value in the JSON should be null (e.g., "supplier_gst_number": null) do not include ',' in the all intger but correctly include '.'.
 
 Here is the invoice text:"""
         contents =[
@@ -93,6 +96,8 @@ class CookieLoginView(APIView):
 
         user = CustomUser.objects.filter(email=email).first()
         if user is not None:
+            request.session['user_id'] = user.id
+            print(user.id)
             refresh = RefreshToken.for_user(user)
             response = JsonResponse({"message": "Login successful"})
             response.set_cookie(key="refresh_token", value=str(refresh), httponly=True)
@@ -120,7 +125,7 @@ class FileUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        
+
         file = request.FILES.get('file')
         if not file:
             return Response({"error": "No file provided"}, status=400)
@@ -131,11 +136,27 @@ class FileUploadView(APIView):
             local_file_path = os.path.join(settings.MEDIA_ROOT, path)
             print(local_file_path)
             extrcated_text = extract_text_from_file(local_file_path)
-            extrcated_text = extrcated_text[7:-3].strip()
+            extrcated_text = extrcated_text[7:-4].strip()
             print(extrcated_text)
             try:
                 extrcated_text_json = json.loads(extrcated_text)
-                print(extrcated_text_json.get('total_amount'))
+                # print(extrcated_text_json.get('total_amount'))
+                user_id = request.user.id
+                C_user = CustomUser.objects.get(id=user_id)
+                invoice_data = InvoiceData.objects.create(
+                    user=C_user,
+                    invoice_number=extrcated_text_json.get('invoice_number'),
+                    invoice_date=extrcated_text_json.get('invoice_date'),
+                    supplier_name=extrcated_text_json.get('supplier_name'),
+                    supplier_gst_number=extrcated_text_json.get('supplier_gst_number'),
+                    buyer_gst_number=extrcated_text_json.get('buyer_gst_number'),
+                    items=extrcated_text_json.get('items'),
+                    cgst=extrcated_text_json.get('cgst'),
+                    sgst=extrcated_text_json.get('sgst'),
+                    total_tax=extrcated_text_json.get('total_tax'), 
+                    total_amount=Decimal(extrcated_text_json.get('total_amount')),
+                    raw_extracted_data=extrcated_text,
+                )
             except json.JSONDecodeError:
                 return JsonResponse({"message": "File uploaded successfully", "extracted_text": extrcated_text, 'ok': True, "status": 200})
 

@@ -145,7 +145,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS=[
     'http://localhost:5173',
 ]
-CSRF_COOKIE_SAMESITE = 'Lax'  # or 'None' if you need cross-site
+CSRF_COOKIE_SAMESITE = 'Lax'  
 CSRF_COOKIE_SECURE = False    
 
 
@@ -162,13 +162,13 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=24),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_COOKIE": "access_token",  # 👈 Used by custom middleware if needed
+    "AUTH_COOKIE": "access_token",  
     "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SAMESITE": "Lax",  # Or "Strict"
-    "AUTH_COOKIE_SECURE": False,    # True in production with HTTPS
+    "AUTH_COOKIE_SAMESITE": "Lax",  
+    "AUTH_COOKIE_SECURE": False,    
 }
