@@ -55,8 +55,9 @@ When answering questions:
 - For general queries about GST, CGST, SGST, and other Indian taxes, provide accurate and up-to-date information regarding their definitions, applicability, and basic principles.
 - Avoid making up information or speculating. If unsure, explicitly say, "I do not have the specific information."
 - Maintain a professional and helpful tone throughout the conversation.
+-Always verify the accuracy of the information you provide and suggest corrections if needed under Note: section.
 
-provide the information in the structured manner with necessary breaks and spaces
+provide the information in the structured manner with necessary breaks and spaces use next line for each point like invoide number then next line, do not use * any where in the response.
 """
         print("here")
         user_id = request.session.get('user_id')

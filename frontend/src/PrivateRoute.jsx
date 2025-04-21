@@ -8,14 +8,17 @@ const PrivateRoute = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log("Checking authentication...");
         const res = await fetch("/api/users/auth/check", {
           method: "GET",
           credentials: "include",
         });
 
         if (res.ok) {
+          console.log("Auth check successful");
           setAuth(true);
         } else {
+          console.log("Auth check failed from else");
           setAuth(false);
         }
       } catch (err) {

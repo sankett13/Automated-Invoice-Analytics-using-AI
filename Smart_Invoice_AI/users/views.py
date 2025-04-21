@@ -11,10 +11,8 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import google.generativeai as genai
 from google.generativeai import types
-import pathlib
 import mimetypes
 import json
-from django.contrib.auth import login
 from decimal import Decimal
 
 
@@ -53,8 +51,9 @@ You are an expert at extracting specific details from invoices. Please carefully
 - SGST: The total amount of State Goods and Services Tax, if mentioned. If multiple SGST entries exist, sum them. If not found, output 0.
 - Total Tax: The total combined amount of all taxes (including CGST, SGST, IGST, etc.) mentioned on the invoice. If individual tax components are listed, sum them up. If no taxes are found, output 0.
 - Total Amount: The final, grand total amount due on the invoice, usually found at the very end or clearly labeled as "Total", "Grand Total", "Amount Due", etc.
+-Category: categorize the invoice as 'Travel', 'Food', 'Electronics', 'Clothing', 'Hardware', or 'Other' based on the items listed.
 
-Format your response as a valid structured JSON object without any extra characters. The JSON object should have the following structure with the keys: "invoice_number", "invoice_date", "supplier_name", "supplier_gst_number", "buyer_gst_number", "items", "cgst", "sgst", "total_tax", and "total_amount". For the "items", provide a list of dictionaries, where each dictionary has "name", "quantity", "price", and "total" keys. If a field is not found on the invoice, its value in the JSON should be null (e.g., "supplier_gst_number": null) do not include ',' in the all intger but correctly include '.'.
+Format your response as a valid structured JSON object without any extra characters. The JSON object should have the following structure with the keys: "invoice_number", "invoice_date", "supplier_name", "supplier_gst_number", "buyer_gst_number", "items", "cgst", "sgst", "total_tax", "total_amount", and "category". For the "items", provide a list of dictionaries, where each dictionary has "name", "quantity", "price", and "total" keys. If a field is not found on the invoice, its value in the JSON should be null (e.g., "supplier_gst_number": null) do not include ',' in the all intger but correctly include '.'.
 
 Here is the invoice text:"""
         contents =[
@@ -86,30 +85,31 @@ Here is the invoice text:"""
 class CookieLoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
-        print('request')
-        print(request)
         data = request.data
-        print(data)
         email = data.get('email')
         password = data.get('password')
         print(email, password)
 
-        user = CustomUser.objects.filter(email=email).first()
+        user = CustomUser.objects.get(email=email, password=password)
+        print(user)
         if user is not None:
+            print(user.email)
             request.session['user_id'] = user.id
-            print(user.id)
             refresh = RefreshToken.for_user(user)
             response = JsonResponse({"message": "Login successful"})
             response.set_cookie(key="refresh_token", value=str(refresh), httponly=True)
             response.set_cookie(key="access_token", value=str(refresh.access_token), httponly=True)
+            print("response returned")
             return response
 
         return Response({"message": "Invalid credentials"}, status=401)
 
 class ProtectedView(APIView):
+    
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        print("Protected route accessed successfully")
         return Response({"message": "Protected route accessed successfully", 'ok': True, "status": 200})
 
 class CookieLogoutView(APIView):
@@ -155,10 +155,11 @@ class FileUploadView(APIView):
                     sgst=extrcated_text_json.get('sgst'),
                     total_tax=extrcated_text_json.get('total_tax'), 
                     total_amount=Decimal(extrcated_text_json.get('total_amount')),
+                    category=extrcated_text_json.get('category'),
                     raw_extracted_data=extrcated_text,
                 )
             except json.JSONDecodeError:
-                return JsonResponse({"message": "File uploaded successfully", "extracted_text": extrcated_text, 'ok': True, "status": 200})
+                return JsonResponse({"message": "File uploaded successfully", 'ok': True, "status": 200})
 
-            return JsonResponse({"message": "File uploaded successfully", "extracted_text": extrcated_text, 'ok': True, "status": 200})
+            return JsonResponse({"message": "File uploaded successfully", 'ok': True, "status": 200})
         return Response({"error": "No file provided"}, status=400)
