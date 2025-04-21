@@ -194,13 +194,78 @@ const InvoiceCharts = () => {
     },
   };
 
+  // Prepare data for Category Wise Expense Doughnut Chart
+  const categoryExpenses = {};
+  invoiceData.forEach((invoice) => {
+    if (invoice.category && invoice.total_amount) {
+      categoryExpenses[invoice.category] =
+        (categoryExpenses[invoice.category] || 0) + invoice.total_amount;
+    }
+  });
+
+  const categoryLabels = Object.keys(categoryExpenses);
+  const categoryDataValues = Object.values(categoryExpenses);
+  const categoryColors = [
+    '#2563EB', // Blue-600
+    '#84CC16', // Lime-500
+    '#CA8A04', // Amber-500
+    '#DB2777', // Pink-500
+    '#14B8A6', // Teal-500
+    '#7C3AED', // Purple-600
+    '#D97706', // Orange-500
+    '#059669', // Green-600
+    '#6D28D9', // Indigo-600
+    '#EF4444', // Red-500
+  ];
+
+  const categoryDoughnutData = {
+    labels: categoryLabels,
+    datasets: [
+      {
+        data: categoryDataValues,
+        backgroundColor: categoryColors,
+        borderWidth: 1,
+        borderColor: 'white',
+        cutout: '50%', // Adjust for the thickness of the doughnut
+      },
+    ],
+  };
+
+  const categoryDoughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Expense Breakdown by Category',
+        font: { size: 14, weight: 'medium', color: '#374151' },
+        padding: { bottom: 10 },
+      },
+      legend: {
+        position: 'bottom',
+        labels: { color: '#6B7280', font: { size: 12 }, usePointStyle: true },
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            let label = context.label || '';
+            if (context.parsed !== null) {
+              label += `: $${context.parsed.toFixed(2)}`;
+            }
+            return label;
+          }
+        }
+      }
+    },
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         Invoice Data Insights
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="relative h-80">
           <div className="absolute top-0 left-0 w-full h-full">
             <Bar data={totalAmountData} options={totalAmountOptions} />
@@ -210,6 +275,12 @@ const InvoiceCharts = () => {
         <div className="relative h-80">
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
             <Pie data={totalTaxData} options={totalTaxOptions} />
+          </div>
+        </div>
+
+        <div className="relative h-80">
+          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+            <Pie data={categoryDoughnutData} options={categoryDoughnutOptions} />
           </div>
         </div>
       </div>

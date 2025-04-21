@@ -14,6 +14,7 @@ from google.generativeai import types
 import mimetypes
 import json
 from decimal import Decimal
+from django.contrib.auth import authenticate
 
 
 #Genai Configuration
@@ -90,7 +91,7 @@ class CookieLoginView(APIView):
         password = data.get('password')
         print(email, password)
 
-        user = CustomUser.objects.get(email=email, password=password)
+        user = authenticate(email=email, password=password)
         print(user)
         if user is not None:
             print(user.email)
@@ -103,6 +104,23 @@ class CookieLoginView(APIView):
             return response
 
         return Response({"message": "Invalid credentials"}, status=401)
+    
+class RegistrerView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        data = request.data
+        email = data.get('email')
+        password = data.get('password')
+        username = data.get('username')
+        print(email, password)
+        if CustomUser.objects.filter(email=email).exists():
+            return Response({"message": "User already exists"}, status=400)
+
+        user = CustomUser.objects.create_user(email=email, username=username, password=password)
+        user.save()
+        print(user.email, user.id)
+        response = JsonResponse({"message": "Registration successful"})
+        return response
 
 class ProtectedView(APIView):
     

@@ -174,3 +174,5 @@ SIMPLE_JWT = {
     "AUTH_COOKIE_SAMESITE": "Lax",  
     "AUTH_COOKIE_SECURE": False,    
 }
+
+AUTH_USER_MODEL = 'users.CustomUser'

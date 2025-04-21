@@ -1,11 +1,16 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import JSONField
 
+
 # Create your models here.
-class CustomUser(models.Model):
+class CustomUser(AbstractUser):
 
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
         return self.email

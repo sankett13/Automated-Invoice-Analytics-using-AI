@@ -32,6 +32,7 @@ class InvoiceView(APIView):
                     "sgst": invoice.sgst,
                     "total_tax": invoice.total_tax,
                     "total_amount": invoice.total_amount,
+                    "category": invoice.category
                 })
             # print("response returned")
             return Response({"invoices": invoice_list})
