@@ -34,7 +34,7 @@ class InvoiceView(APIView):
                     "total_amount": invoice.total_amount,
                     "category": invoice.category
                 })
-            # print("response returned")
+            
             return Response({"invoices": invoice_list})
         except Exception as e:
             print(e)

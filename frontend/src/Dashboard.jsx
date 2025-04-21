@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import InvoiceCharts from './InvoiceCharts';
 import ChatBot from './ChatBot';
+import InvoiceTable from './InvoiceTable';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const Dashboard = () => {
   const [file, setFile] = useState(null);
   const [uploadMessage, setUploadMessage] = useState('');
   const [extractedText, setExtractedText] = useState('');
+  const [activeTab, setActiveTab] = useState('upload');
 
   const logout = async () => {
     try {
@@ -23,10 +25,8 @@ const Dashboard = () => {
       const data = await res.json();
 
       if (res.ok) {
-        console.log(data);
         navigate('/');
       } else {
-        console.log(data.error);
         setError(data.error || 'Logout failed');
       }
     } catch (err) {
@@ -39,7 +39,7 @@ const Dashboard = () => {
     setFile(e.target.files[0]);
     setUploadMessage('');
     setError(null);
-    setExtractedText(''); // Clear previous extracted text
+    setExtractedText('');
   };
 
   const handleSubmit = async () => {
@@ -62,114 +62,121 @@ const Dashboard = () => {
 
       if (res.ok) {
         setUploadMessage('File uploaded successfully!');
-        console.log(data);
-        // setExtractedText(JSON.stringify(data.extracted_text || ''));
-        window.location.reload();
         setFile(null);
+        window.location.reload();
       } else {
         setError(data.error || 'Upload failed');
-        setExtractedText(''); // Clear any potentially old text
+        setExtractedText('');
       }
     } catch (err) {
       console.error('Upload error:', err);
       setError('Something went wrong during upload.');
-      setExtractedText(''); // Clear any potentially old text
+      setExtractedText('');
     }
   };
 
+  // Sample analytics data to pass to the chatbot
+  const analyticsData = {
+    totalTax: 2540,
+    highestCategory: 'Office Supplies',
+    highestAmount: 11000,
+    totalAmount: 32500,
+    invoiceCount: 14,
+  };
+
   return (
-    <div className="bg-gray-100 min-h-screen p-6 flex flex-col">
-      <header className="bg-white shadow-md p-4 mb-6 rounded-lg flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-gray-800">
-          Invoice Management Dashboard
-        </h1>
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white shadow-lg p-6 flex flex-col justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">Dashboard</h2>
+          <nav className="space-y-4">
+            <button
+              className={`w-full text-left px-4 py-2 rounded-lg hover:bg-gray-200 ${activeTab === 'upload' ? 'bg-gray-200' : ''}`}
+              onClick={() => setActiveTab('upload')}
+            >
+              Upload Invoice
+            </button>
+            <button
+              className={`w-full text-left px-4 py-2 rounded-lg hover:bg-gray-200 ${activeTab === 'analytics' ? 'bg-gray-200' : ''}`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              Analytics
+            </button>
+            <button
+              className={`w-full text-left px-4 py-2 rounded-lg hover:bg-gray-200 ${activeTab === 'table' ? 'bg-gray-200' : ''}`}
+              onClick={() => setActiveTab('table')}
+            >
+              Invoice Data Table
+            </button>
+          </nav>
+        </div>
         <button
           onClick={logout}
-          className="bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          className="bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded"
         >
           Logout
         </button>
-      </header>
+      </aside>
 
-      <main className="flex-grow bg-white shadow-md rounded-lg p-6">
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Upload Invoice
-          </h2>
-          <div className="flex items-center space-x-4">
-            <div className="flex-grow">
-              <label
-                htmlFor="file-upload"
-                className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded focus:outline-none focus:shadow-outline block"
-              >
-                <svg
-                  className="w-5 h-5 inline-block mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+      {/* Main content */}
+      <main className="flex-grow p-8">
+        {activeTab === 'upload' && (
+          <>
+            <h1 className="text-2xl font-semibold mb-6 text-gray-800">Upload Invoice</h1>
+            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+              <div className="flex items-center space-x-4">
+                <label
+                  htmlFor="file-upload"
+                  className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  ></path>
-                </svg>
-                Choose File
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                accept=".png,.jpeg,.jpg,.pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              {file && <span className="text-gray-500 italic text-sm ml-2">{file.name}</span>}
+                  Choose File
+                </label>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".png,.jpeg,.jpg,.pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                {file && (
+                  <span className="text-gray-500 italic text-sm">{file.name}</span>
+                )}
+                <button
+                  onClick={handleSubmit}
+                  className="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
+                >
+                  Upload
+                </button>
+              </div>
+              {uploadMessage && <p className="text-green-600 mt-2">{uploadMessage}</p>}
+              {error && <p className="text-red-600 mt-2">{error}</p>}
             </div>
-            <button
-              onClick={handleSubmit}
-              className="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-              Upload
-            </button>
-          </div>
-          {uploadMessage && (
-            <p className="text-green-600 mt-2">{uploadMessage}</p>
-          )}
-          {error && <p className="text-red-600 mt-2">{error}</p>}
-        </section>
+          </>
+        )}
 
-        {extractedText && (
-          <section className="mt-8 border rounded-lg p-6 bg-gray-50">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-              Extracted Text
-            </h2>
-            <div className="overflow-auto rounded-md bg-white p-4 shadow-sm">
-              <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
-                {extractedText}
-              </pre>
+        {activeTab === 'analytics' && (
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Analytics</h2>
+            <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+              <InvoiceCharts />
+            </div>
+            <h3 className="text-xl font-medium text-gray-700 mb-4">Ask Analytics Bot</h3>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <ChatBot analyticsData={analyticsData} />
             </div>
           </section>
         )}
 
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Invoice Analytics
-          </h2>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <InvoiceCharts />
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
-            Chatbot Assistant
-          </h2>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <ChatBot />
-          </div>
-        </section>
+        {activeTab === 'table' && (
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-6">Invoice Data Table</h2>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <InvoiceTable/>
+              <p className="text-gray-600">Table data goes here...</p>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
