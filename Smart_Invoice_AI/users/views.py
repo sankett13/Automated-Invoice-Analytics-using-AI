@@ -17,6 +17,7 @@ from decimal import Decimal
 from django.contrib.auth import authenticate
 
 
+
 #Genai Configuration
 genai.configure(api_key="AIzaSyBC8yV7_4RO3paTUgLPQf6WLYIZ7lnqzgw")
 gemini_flash = genai.GenerativeModel("gemini-1.5-flash")
@@ -181,3 +182,5 @@ class FileUploadView(APIView):
 
             return JsonResponse({"message": "File uploaded successfully", 'ok': True, "status": 200})
         return Response({"error": "No file provided"}, status=400)
+
+    

@@ -1,100 +1,146 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './Chatbot.css';
+import React, { useState, useEffect, useRef } from "react";
+
+const funBotFaces = ["🤖", "😎", "😜", "👽", "🧠", "💡", "🔥", "✨"];
+const confettiWords = ["great", "awesome", "thanks", "love", "cool"];
+const bgColors = ["#dff7f6", "#fef6e4", "#f4f4fc", "#fff0f6", "#e8f9f1"];
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [isBotThinking, setIsBotThinking] = useState(false);
+  const [botFace, setBotFace] = useState("🤖");
+  const [backgroundIndex, setBackgroundIndex] = useState(0);
   const messageEndRef = useRef(null);
+  const typingAudio = useRef(null);
+  const musicAudio = useRef(null);
 
-  const handleInputChange = (event) => {
-    setInputText(event.target.value);
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const emoji = document.getElementById("bot-face");
+      if (emoji) {
+        emoji.style.transform = `translate(${(e.clientX - window.innerWidth / 2) / 80}px, ${(e.clientY - window.innerHeight / 2) / 80}px)`;
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  useEffect(() => {
+    musicAudio.current = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_eb15bfa320.mp3");
+    musicAudio.current.volume = 0.2;
+    musicAudio.current.loop = true;
+    musicAudio.current.play().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    typingAudio.current = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_aef36e3c29.mp3");
+    typingAudio.current.volume = 0.6;
+  }, []);
+
+  const handleInputChange = (e) => setInputText(e.target.value);
+
+  const triggerConfetti = () => {
+    const confetti = document.createElement("div");
+    confetti.className = "absolute top-0 left-0 w-full h-full pointer-events-none z-50";
+    confetti.innerHTML = `<div class="w-full h-full flex justify-center items-center animate-bounce text-6xl">🎉</div>`;
+    document.body.appendChild(confetti);
+    setTimeout(() => document.body.removeChild(confetti), 1000);
   };
 
   const handleSendMessage = async () => {
-    if (inputText.trim()) {
-      const newUserMessage = { text: inputText, sender: 'user' };
-      setMessages((prevMessages) => [...prevMessages, newUserMessage]);
-      setInputText('');
-      setIsBotThinking(true);
+    if (!inputText.trim()) return;
+    setMessages((msgs) => [...msgs, { text: inputText, sender: "user" }]);
+    setInputText("");
+    setIsBotThinking(true);
 
-      try {
-        const response = await fetch('/api/invoices/chatbot/', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
+    if (confettiWords.some((word) => inputText.toLowerCase().includes(word))) {
+      triggerConfetti();
+    }
+
+    typingAudio.current?.play();
+
+    try {
+      const res = await fetch("/api/invoices/chatbot/", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: inputText }),
+      });
+
+      const { response } = await res.json();
+      const randomFace = funBotFaces[Math.floor(Math.random() * funBotFaces.length)];
+      setBotFace(randomFace);
+
+      setTimeout(() => {
+        setMessages((msgs) => [...msgs, { text: response, sender: "bot" }]);
+        setIsBotThinking(false);
+        setBackgroundIndex((prev) => (prev + 1) % bgColors.length);
+      }, 700);
+    } catch {
+      setTimeout(() => {
+        setMessages((msgs) => [
+          ...msgs,
+          {
+            text: "💥 Oops! My circuits are fried. Try again later.",
+            sender: "bot",
           },
-          body: JSON.stringify({ message: inputText }),
-        });
-
-        if (!response.ok) {
-          const errorMessage = await response.json();
-          throw new Error(`HTTP error! status: ${response.status}, message: ${errorMessage.error || 'Unknown error'}`);
-        }
-
-        const responseData = await response.json();
-        const botReply = responseData.response;
-
-        setTimeout(() => {
-          const chatbotResponse = { text: botReply, sender: 'bot' };
-          setMessages((prevMessages) => [...prevMessages, chatbotResponse]);
-          setIsBotThinking(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error sending message to chatbot API:', error);
-        setTimeout(() => {
-          const errorMessage = { text: 'Sorry, I encountered an error. Please try again later.', sender: 'bot' };
-          setMessages((prevMessages) => [...prevMessages, errorMessage]);
-          setIsBotThinking(false);
-        }, 500);
-      }
+        ]);
+        setIsBotThinking(false);
+      }, 700);
     }
   };
 
-  const scrollToBottom = () => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md flex flex-col h-[80vh] max-h-screen overflow-hidden border border-gray-200">
+    <div
+      className="relative flex flex-col rounded-lg shadow-lg h-[80vh] max-h-screen overflow-hidden transition-colors duration-700"
+      style={{ backgroundColor: bgColors[backgroundIndex] }}
+    >
       {/* Header */}
-      <div className="bg-gray-50 p-3 border-b border-gray-200 flex items-center justify-between">
+      <header className="bg-[#01b8b1] p-4 shadow-md flex items-center justify-between">
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-green-400 flex items-center justify-center text-white font-bold text-sm">
-            S
-          </div>
-          <h2 className="text-lg font-semibold text-gray-800 ml-2">Super Chat</h2>
-        </div>
-      </div>
-
-      {/* Message History */}
-      <div className="flex-grow overflow-y-auto p-3">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`mb-2 p-3 rounded-md whitespace-pre-wrap ${
-              message.sender === 'user'
-                ? 'bg-blue-100 text-blue-800 self-end rounded-br-none'
-                : 'bg-gray-100 text-gray-800 self-start rounded-bl-none'
-            }`}
+          <span
+            id="bot-face"
+            className="w-8 h-8 rounded-full bg-[#e6c065] text-white flex items-center justify-center text-lg transition-transform duration-300"
           >
-            {message.text.split('\n').map((line, i) => (
-              <p key={i} className="mb-1">{line}</p>
-            ))}
+            {botFace}
+          </span>
+          <h2 className="ml-2 text-white font-semibold text-lg">Super Chat</h2>
+        </div>
+        <div className="text-white text-sm italic animate-pulse">
+          AI-powered magic ⚡
+        </div>
+      </header>
+
+      {/* Messages */}
+      <div className="flex-grow p-4 overflow-y-auto bg-white relative">
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            className={`mb-2 p-3 rounded-xl whitespace-pre-wrap max-w-[70%] transition-all duration-500 ${
+              m.sender === "user"
+                ? "bg-[#01b8b1] text-white self-end"
+                : "bg-[#f9f9f9] text-[#484c4d] self-start shadow-md border border-[#e6c065]"
+            }`}
+            style={
+              m.sender === "bot"
+                ? { boxShadow: "0 0 12px #e6c065" }
+                : {}
+            }
+          >
+            {m.text}
           </div>
         ))}
         {isBotThinking && (
-          <div className="mb-2 p-3 rounded-md bg-gray-100 text-gray-600 self-start italic flex items-center">
-            Thinking
-            <span className="typing-indicator ml-2">
-              <span>.</span>
-              <span>.</span>
-              <span>.</span>
+          <div className="mb-2 p-3 rounded-xl bg-[#01b8b1] text-white self-start italic flex items-center animate-pulse">
+            Typing
+            <span className="ml-2 flex">
+              <span className="w-2.5 h-2.5 bg-white rounded-full mr-1 animate-bounce delay-100"></span>
+              <span className="w-2.5 h-2.5 bg-white rounded-full mr-1 animate-bounce delay-200"></span>
+              <span className="w-2.5 h-2.5 bg-white rounded-full animate-bounce delay-300"></span>
             </span>
           </div>
         )}
@@ -102,29 +148,21 @@ const Chatbot = () => {
       </div>
 
       {/* Input Area */}
-      <div className="p-3 border-t border-gray-200 flex items-center">
+      <div className="flex p-4 border-t border-[#eee] bg-[#01b8b1]">
         <input
           type="text"
-          className="shadow appearance-none border rounded-md w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mr-2"
+          className="flex-grow p-3 rounded-lg border border-[#ddd] text-[#484c4d] focus:outline-none focus:ring-2 focus:ring-[#e6c065] placeholder-[#777]"
           value={inputText}
           onChange={handleInputChange}
           placeholder="Ask or search anything..."
-          onKeyPress={(event) => event.key === 'Enter' && handleSendMessage()}
+          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
         />
         <button
-          className="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:shadow-outline"
+          className="ml-4 bg-[#e6c065] text-[#484c4d] py-3 px-6 rounded-lg focus:outline-none hover:shadow-[0_0_10px_#e6c065] transition-all duration-300 hover:scale-105"
           onClick={handleSendMessage}
           disabled={isBotThinking}
         >
-          {isBotThinking ? (
-            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 4V1m0 18v-3M4 12H1m18 0h-3M4 4l2.12 2.12M17.88 6.12L19 4m-10 10l-2.12 2.12M6.12 17.88L4 19m10-10l2.12-2.12M17.88 11.88L19 10m-10 10l-2.12-2.12M6.12 6.12L4 4" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-            </svg>
-          )}
+          🚀 Send
         </button>
       </div>
     </div>

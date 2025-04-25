@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bar, Pie } from 'react-chartjs-2';
+import React, { useState, useEffect } from "react";
+import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,7 +9,7 @@ import {
   Tooltip,
   Legend,
   ArcElement,
-} from 'chart.js';
+} from "chart.js";
 
 ChartJS.register(
   CategoryScale,
@@ -29,17 +29,21 @@ const InvoiceCharts = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/invoices/', {
-          method: 'GET',
-          credentials: 'include',
+        const res = await fetch("/api/invoices/", {
+          method: "GET",
+          credentials: "include",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
 
         if (!res.ok) {
           const errorMessage = await res.json();
-          throw new Error(`HTTP error! status: ${res.status}, message: ${errorMessage.error || 'Unknown error'}`);
+          throw new Error(
+            `HTTP error! status: ${res.status}, message: ${
+              errorMessage.error || "Unknown error"
+            }`
+          );
         }
 
         const responseData = await res.json();
@@ -49,7 +53,7 @@ const InvoiceCharts = () => {
       } catch (err) {
         setError(err.message);
         setLoading(false);
-        console.error('Error fetching invoice data:', err);
+        console.error("Error fetching invoice data:", err);
       }
     };
 
@@ -61,11 +65,17 @@ const InvoiceCharts = () => {
   }
 
   if (error) {
-    return <div className="text-red-500 py-4">Error loading chart data: {error}</div>;
+    return (
+      <div className="text-red-500 py-4">Error loading chart data: {error}</div>
+    );
   }
 
   if (invoiceData.length === 0) {
-    return <p className="text-gray-500 py-4">No invoice data available for charts.</p>;
+    return (
+      <p className="text-gray-500 py-4">
+        No invoice data available for charts.
+      </p>
+    );
   }
 
   // Prepare data for the Total Amount Bar Chart
@@ -73,9 +83,9 @@ const InvoiceCharts = () => {
     labels: invoiceData.map((invoice) => invoice.invoice_number),
     datasets: [
       {
-        label: 'Total Amount',
-        backgroundColor: '#6366F1', // Indigo-500
-        borderColor: '#4F46E5', // Indigo-600
+        label: "Total Amount",
+        backgroundColor: "#3B6790", // Matching primary color
+        borderColor: "#EFB036", // Accent color for borders
         borderWidth: 1,
         data: invoiceData.map((invoice) => invoice.total_amount || 0),
       },
@@ -88,15 +98,13 @@ const InvoiceCharts = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Total Amount per Invoice',
+        text: "Total Amount per Invoice",
         font: {
-          size: 14,
-          weight: 'medium',
+          size: 16,
+          weight: "600",
         },
-        color: '#374151',
-        padding: {
-          bottom: 10,
-        },
+        color: "#484c4d", // Primary font color
+        padding: { bottom: 10 },
       },
       legend: {
         display: false,
@@ -107,29 +115,23 @@ const InvoiceCharts = () => {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Amount',
-          color: '#6B7280',
-          font: {
-            size: 12,
-          },
+          text: "Amount",
+          color: "#6B7280",
+          font: { size: 12 },
         },
         grid: {
-          borderColor: '#E5E7EB', // Gray-200
+          borderColor: "#E5E7EB",
           borderDash: [2, 2],
         },
       },
       x: {
         title: {
           display: true,
-          text: 'Invoice',
-          color: '#6B7280',
-          font: {
-            size: 12,
-          },
+          text: "Invoice",
+          color: "#6B7280",
+          font: { size: 12 },
         },
-        grid: {
-          display: false,
-        },
+        grid: { display: false },
         ticks: {
           maxRotation: 45,
           minRotation: 0,
@@ -145,20 +147,20 @@ const InvoiceCharts = () => {
     labels: invoiceData.map((invoice) => invoice.invoice_number),
     datasets: [
       {
-        label: 'Total Tax',
+        label: "Total Tax",
         backgroundColor: [
-          '#F472B6', // Pink-400
-          '#FACC15', // Yellow-400
-          '#4ADE80', // Green-400
-          '#A78BFA', // Purple-400
-          '#F97316', // Orange-500
-          '#38B2AC', // Teal-500
-          '#EC4899', // Pink-500
-          '#EAB308', // Yellow-500
-          '#22C55E', // Green-500
-          '#8B5CF6', // Purple-500
+          "#F472B6",
+          "#FACC15",
+          "#4ADE80",
+          "#A78BFA",
+          "#F97316",
+          "#38B2AC",
+          "#EC4899",
+          "#EAB308",
+          "#22C55E",
+          "#8B5CF6",
         ],
-        borderColor: 'white',
+        borderColor: "white",
         borderWidth: 1,
         data: invoiceData.map((invoice) => invoice.total_tax || 0),
       },
@@ -171,23 +173,19 @@ const InvoiceCharts = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Tax Distribution Across Invoices',
+        text: "Tax Distribution Across Invoices",
         font: {
-          size: 14,
-          weight: 'medium',
+          size: 16,
+          weight: "600",
         },
-        color: '#374151',
-        padding: {
-          bottom: 10,
-        },
+        color: "#484c4d",
+        padding: { bottom: 10 },
       },
       legend: {
-        position: 'bottom',
+        position: "bottom",
         labels: {
-          color: '#6B7280',
-          font: {
-            size: 12,
-          },
+          color: "#484c4d",
+          font: { size: 12 },
           usePointStyle: true,
         },
       },
@@ -206,16 +204,16 @@ const InvoiceCharts = () => {
   const categoryLabels = Object.keys(categoryExpenses);
   const categoryDataValues = Object.values(categoryExpenses);
   const categoryColors = [
-    '#2563EB', // Blue-600
-    '#84CC16', // Lime-500
-    '#CA8A04', // Amber-500
-    '#DB2777', // Pink-500
-    '#14B8A6', // Teal-500
-    '#7C3AED', // Purple-600
-    '#D97706', // Orange-500
-    '#059669', // Green-600
-    '#6D28D9', // Indigo-600
-    '#EF4444', // Red-500
+    "#2563EB",
+    "#84CC16",
+    "#CA8A04",
+    "#DB2777",
+    "#14B8A6",
+    "#7C3AED",
+    "#D97706",
+    "#059669",
+    "#6D28D9",
+    "#EF4444",
   ];
 
   const categoryDoughnutData = {
@@ -225,8 +223,8 @@ const InvoiceCharts = () => {
         data: categoryDataValues,
         backgroundColor: categoryColors,
         borderWidth: 1,
-        borderColor: 'white',
-        cutout: '50%', // Adjust for the thickness of the doughnut
+        borderColor: "white",
+        cutout: "50%",
       },
     ],
   };
@@ -237,51 +235,42 @@ const InvoiceCharts = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Expense Breakdown by Category',
-        font: { size: 14, weight: 'medium', color: '#374151' },
+        text: "Expense Breakdown by Category",
+        font: { size: 16, weight: "600", color: "#484c4d" },
         padding: { bottom: 10 },
       },
       legend: {
-        position: 'bottom',
-        labels: { color: '#6B7280', font: { size: 12 }, usePointStyle: true },
+        position: "bottom",
+        labels: { color: "#484c4d", font: { size: 12 }, usePointStyle: true },
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
-            let label = context.label || '';
+          label: function (context) {
+            let label = context.label || "";
             if (context.parsed !== null) {
               label += `: $${context.parsed.toFixed(2)}`;
             }
             return label;
-          }
-        }
-      }
+          },
+        },
+      },
     },
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+    <div className="bg-white rounded-lg shadow-lg p-6 mt-4">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">
         Invoice Data Insights
       </h2>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="relative h-80">
-          <div className="absolute top-0 left-0 w-full h-full">
-            <Bar data={totalAmountData} options={totalAmountOptions} />
-          </div>
+        <div className="relative h-80 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300">
+          <Bar data={totalAmountData} options={totalAmountOptions} />
         </div>
-
-        <div className="relative h-80">
-          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-            <Pie data={totalTaxData} options={totalTaxOptions} />
-          </div>
+        <div className="relative h-80 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300">
+          <Pie data={totalTaxData} options={totalTaxOptions} />
         </div>
-
-        <div className="relative h-80">
-          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-            <Pie data={categoryDoughnutData} options={categoryDoughnutOptions} />
-          </div>
+        <div className="relative h-80 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition-shadow duration-300">
+          <Pie data={categoryDoughnutData} options={categoryDoughnutOptions} />
         </div>
       </div>
     </div>
