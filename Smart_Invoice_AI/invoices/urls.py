@@ -1,7 +1,8 @@
 from django.urls import path
-from . import views
+from .views import InvoiceView, ChatBotView, AnalyticsView
 
 urlpatterns = [
-    path('', views.InvoiceView.as_view(), name='InvoiceView'),
-    path('chatbot/', views.ChatBotView.as_view(), name='ChatBotView'),
+    path('invoices/', InvoiceView.as_view(), name='invoices'),
+    path('chat/', ChatBotView.as_view(), name='chat'),
+    path('analytics/', AnalyticsView.as_view(), name='analytics'),
 ]
